@@ -31,25 +31,6 @@ void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
-		R = 1.0f;
-		G = B = 0;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
-	{
-		G = 1.0f;
-		R = B = 0;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
-	{
-		B = 1.0f;
-		G = R = 0;
-	}
-
-	glfwGetCursorPos(window, &xpos, &ypos);
 }
 
 int main(){
@@ -142,9 +123,6 @@ int main(){
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shaderProgram);
-		//float timeValue = glfwGetTime();
-		//float greenValue = sin(timeValue) / 2.0f + 0.5f;
-		// std::cout << xpos << " " << ypos << std::endl;
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 		int posicaoOurColor = glGetUniformLocation(shaderProgram, "resolution");

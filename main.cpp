@@ -1,0 +1,164 @@
+#include <iostream>
+#include <cmath>
+#include "glad.h"
+#include <GLFW/glfw3.h>
+
+const char *vertexShaderSource = "#version 330 core\n"
+								 "layout (location = 0) in vec3 aPos;\n"
+								 "void main()\n"
+								 "{\n"
+								 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+								 "}\0";
+
+const char *fragmentShaderSource = "#version 330 core\n"
+								   "out vec4 FragColor;\n"
+								   "uniform vec2 resolution;\n"
+								   "void main()\n"
+								   "{\n"
+                   "   vec4 cor;"
+                   "   vec2 st = gl_FragCoord.xy/resolution;"
+                   "   cor = vec4(1.0f, 1.0f, 0.0f, 1.0f);"
+                   "   if(st.x > 0.5)"
+                   "      cor = vec4(0.0f, 0.0f, 1.0f, 1.0f);"
+								   "   FragColor = cor;\n"
+								   "}\n\0";
+
+#define WIDTH 500
+#define HEIGHT 500
+float R, G, B;
+double xpos, ypos;
+void processInput(GLFWwindow *window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
+		R = 1.0f;
+		G = B = 0;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+	{
+		G = 1.0f;
+		R = B = 0;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
+	{
+		B = 1.0f;
+		G = R = 0;
+	}
+
+	glfwGetCursorPos(window, &xpos, &ypos);
+}
+
+int main(){
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	GLFWwindow* window;
+	window = glfwCreateWindow(WIDTH, HEIGHT, "Janela", NULL, NULL);
+
+	if(window == NULL) {
+		std::cout << "Vamos pra casa" << std::endl;
+		return 1;
+	}
+
+	glfwMakeContextCurrent(window);
+
+	if(!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)){
+		std::cout << "Vamos pra casa mesmo" << std::endl;
+		return 2;
+	}
+
+	int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+
+	int success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+
+	if(!success){
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "Erro vertex shader:" << infoLog << std::endl;
+		return 3;
+	}
+
+	int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+
+	if (!success){
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "Erro fragment shader:" << infoLog << std::endl;
+		return 4;
+	}
+
+	int shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+
+	if (!success){
+		glGetShaderInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "Erro program shader:" << infoLog << std::endl;
+		return 5;
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	// VBO e o VAO
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.0f, 0.5f, 0.0f,
+	};
+
+	unsigned int VBO, VAO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	while(!glfwWindowShouldClose(window)){
+		processInput(window);
+
+		glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(shaderProgram);
+		//float timeValue = glfwGetTime();
+		//float greenValue = sin(timeValue) / 2.0f + 0.5f;
+		// std::cout << xpos << " " << ypos << std::endl;
+		int width, height;
+		glfwGetWindowSize(window, &width, &height);
+		int posicaoOurColor = glGetUniformLocation(shaderProgram, "resolution");
+		glUniform2f(posicaoOurColor, width, height);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+
+	std::cout << "Vamos continuar estudando" << std::endl;
+	return 0;
+}
